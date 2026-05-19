@@ -161,7 +161,8 @@
     import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
     import { getDatabase, ref, set, get, update } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
-    // 🛠️ RE-PASTE YOUR ACTUAL WEB API CONFIG KEY VALUES HERE FOR LOGIN PROTECTION
+    // ⚠️ CRITICAL STEP: Paste your actual FIREBASE WEB APP API KEY details here!
+    // Do not paste your Gemini key into this object block.
     const firebaseConfig = {
   apiKey: "AIzaSyDR72_2h4mLX8fzIu4-Z66JnSS2Dx1WwGA",
   authDomain: "dsmind.firebaseapp.com",
@@ -213,7 +214,7 @@
             if (snapshot.exists()) {
                 globalSecretApiKey = snapshot.val().trim();
             } else {
-                document.getElementById("question-vignette").textContent = "Administrative Error: Shared AI Access Key is missing from the database.";
+                document.getElementById("question-vignette").textContent = "Administrative Error: Shared AI Access Key is missing from the database paths.";
             }
         } catch(e) { console.error("Database handshake issue:", e); }
     }
@@ -275,7 +276,7 @@
         document.getElementById("accuracy-lbl").textContent = `${accuracy}%`;
     }
 
-    // 🚀 STABLE PARSING LOGIC ENGINE (Includes user parameters requested)
+    // 🚀 CLEAN PRODUCTION-GRADE GENERATION CONFIGURATION
     async function fetchNextAICase() {
         if (!globalSecretApiKey) return;
         document.getElementById("interactive-quiz-workspace").style.display = "none";
@@ -296,12 +297,11 @@
         const rEnv = environments[Math.floor(Math.random() * environments.length)];
         const rQual = qualifiers[Math.floor(Math.random() * qualifiers.length)];
 
-        // Strict, simplified instructions forcing standard string structures
-        const coreInstructions = `Generate a multiple-choice clinical board vignette for: ${selectedChapter}.
-Patient demographic: ${rAge} in ${rEnv} exhibiting ${rQual}.
+        const coreInstructions = `Create a distinct DSM-5 multiple-choice board question regarding: ${selectedChapter}. 
+Profile target: ${rAge} evaluated within ${rEnv} showing ${rQual}.
 
-Provide your entire response as a single, valid minified JSON object on one line. Avoid any trailing commas or markdown format blocks. Use this exact key structure:
-{"category":"${selectedChapter}","vignette":"Clinical story here...","options":["Choice A","Choice B","Choice C","Choice D"],"correctIndex":0,"explanation":"Rationale here..."}`;
+You must return a raw JSON object matching this exact example layout structure:
+{"category":"${selectedChapter}","vignette":"Case details...","options":["A","B","C","D"],"correctIndex":0,"explanation":"Breakdown..."}`;
 
         try {
             const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${globalSecretApiKey}`, {
@@ -320,43 +320,44 @@ Provide your entire response as a single, valid minified JSON object on one line
             if (data.error) throw new Error(data.error.message);
             
             if (!data.candidates || !data.candidates[0] || !data.candidates[0].content) {
-                console.warn("Empty response structure payload received. Retrying call...");
-                return fetchNextAICase();
+                throw new Error("Quota threshold reached or empty endpoint response structure received.");
             }
             
             let rawText = data.candidates[0].content.parts[0].text.trim();
             
-            // Strip out any accidental markdown blocks
             if (rawText.includes("```")) {
                 rawText = rawText.replace(/```json/gi, "").replace(/```/g, "").trim();
             }
             
-            // Isolate JSON content fields
             const firstBrace = rawText.indexOf("{");
             const lastBrace = rawText.lastIndexOf("}");
             
             if (firstBrace === -1 || lastBrace === -1) {
-                console.warn("Brace elements missing. Retrying runtime content...");
-                return fetchNextAICase(); 
+                throw new Error("JSON string framing delimiters missing from generation text.");
             }
             
             rawText = rawText.substring(firstBrace, lastBrace + 1);
             
-            // 🧹 ADVANCED STRING SANITIZATION: Clean up broken commas or bad line breaks
+            // Advanced Cleaning: Erase illegal trailing commas or hidden carriage line feeds
             rawText = rawText
-                .replace(/,\s*([\]}])/g, '$1') // Removes illegal trailing commas before closing braces/brackets
-                .replace(/[\u0000-\u001F\u007F-\u009F]/g, ""); // Removes hidden control characters that break JSON parsing
+                .replace(/,\s*([\]}])/g, '$1')
+                .replace(/[\u0000-\u001F\u007F-\u009F]/g, "");
 
             try {
                 currentCaseData = JSON.parse(rawText);
                 renderAICase();
             } catch (parseError) {
-                console.warn("JSON Sanitizer failed to clean string format. Forcing auto-retry...", parseError);
-                return fetchNextAICase(); // Silently call the API again for a fresh question instead of displaying an error screen
+                console.error("JSON formatting error:", parseError);
+                // Loop removed to preserve quota: show clean diagnostic message instead
+                document.getElementById("question-vignette").textContent = "The layout parsing engine hit a minor structural hiccup. Please click 'Next Board Item' or choose another category to request a clean file!";
+                document.getElementById("loading-spinner").style.display = "none";
+                document.getElementById("interactive-quiz-workspace").style.display = "block";
+                document.getElementById("submit-btn").style.display = "none";
+                document.getElementById("next-btn").style.display = "block";
             }
             
         } catch (e) {
-            console.error("Layout Handshake Failure Log:", e);
+            console.error("Layout Handshake Log:", e);
             document.getElementById("question-vignette").textContent = "The testing engine encountered an unexpected data layout formatting anomaly. Click another study area or tap Next to refresh.";
             document.getElementById("loading-spinner").style.display = "none";
             document.getElementById("interactive-quiz-workspace").style.display = "block";
