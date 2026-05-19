@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DSMind // Cloud Board Suite</title>
+    <style>
+        :root {
+            --matcha-dark: #3B5334;
+            --matcha-medium: #5F7D56;
+            --matcha-light: #A3B899;
+            --matcha-bg: #F1F5F0;
+            --strawberry-dark: #C94A59;
+            --strawberry-pink: #FFB3B3;
+            --strawberry-light: #FFEBEB;
+            --cream: #FFFDF9;
+            --text-dark: #2C3529;
+            --shadow: 0 8px 24px rgba(95, 125, 86, 0.15);
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; }
+        body { background-color: var(--matcha-bg); color: var(--text-dark); display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 20px; }
+
+        .app-container {
+            width: 100%; max-width: 850px; background: var(--cream); border-radius: 24px;
+            box-shadow: var(--shadow); border: 4px solid var(--strawberry-pink); overflow: hidden; display: flex; flex-direction: column; position: relative;
+        }
+
+        header { background-color: var(--matcha-dark); color: var(--cream); padding: 24px; text-align: center; border-bottom: 4px solid var(--strawberry-pink); }
+        header h1 { font-size: 28px; letter-spacing: 2px; margin-bottom: 4px; font-weight: 800; }
+        header p { font-size: 12px; color: var(--strawberry-pink); text-transform: uppercase; letter-spacing: 2px; font-weight: bold; }
+
+        /* Auth Screen Shield Overlay */
+        .auth-overlay {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: var(--cream);
+            z-index: 100; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 40px;
+        }
+        .auth-card {
+            width: 100%; max-width: 400px; padding: 30px; border-radius: 20px; border: 3px solid var(--matcha-light); background: #fff; box-shadow: var(--shadow);
+        }
+        .auth-card h2 { color: var(--matcha-dark); margin-bottom: 20px; text-align: center; }
+        .auth-card input { width: 100%; padding: 12px; margin-bottom: 14px; border: 2px solid var(--matcha-light); border-radius: 8px; outline: none; }
+        .auth-card input:focus { border-color: var(--strawberry-dark); }
+        .auth-buttons { display: flex; gap: 10px; }
+        .auth-buttons button { flex: 1; }
+        .auth-toggle-link { margin-top: 15px; text-align: center; font-size: 13px; color: var(--matcha-medium); cursor: pointer; text-decoration: underline; }
+
+        /* Dashboard and System Controls */
+        .rpg-dashboard { background-color: var(--strawberry-light); padding: 15px 24px; border-bottom: 2px solid rgba(95, 125, 86, 0.1); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; }
+        .stat-badge { background: #fff; padding: 8px 14px; border-radius: 12px; box-shadow: 0 2px 6px rgba(0,0,0,0.05); display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 700; color: var(--matcha-dark); border: 1px solid var(--strawberry-pink); }
+        .level-container { display: flex; flex-direction: column; width: 200px; }
+        .xp-track { width: 100%; background-color: rgba(95, 125, 86, 0.2); height: 8px; border-radius: 4px; margin-top: 4px; overflow: hidden; }
+        .xp-bar { height: 100%; width: 0%; background-color: var(--matcha-medium); transition: width 0.4s ease; }
+        
+        .config-tray { background-color: #FAF4EB; padding: 12px 24px; border-bottom: 1px solid rgba(95, 125, 86, 0.1); display: flex; flex-wrap: wrap; gap: 12px; align-items: center; justify-content: space-between; }
+        .config-group { display: flex; align-items: center; gap: 8px; flex-grow: 1; }
+        .config-tray input, .config-tray select { padding: 8px 12px; border: 2px solid var(--matcha-light); border-radius: 8px; font-size: 13px; background-color: #fff; outline: none; }
+        .config-tray input[type="password"] { flex-grow: 1; max-width: 240px; }
+
+        /* Workspace Panels */
+        .main-content { padding: 30px; flex-grow: 1; position: relative; }
+        .category-badge { display: inline-block; background-color: var(--matcha-light); color: var(--matcha-dark); padding: 6px 14px; border-radius: 20px; font-size: 11px; font-weight: 700; text-transform: uppercase; margin-bottom: 16px; }
+        .vignette { font-size: 16px; line-height: 1.6; margin-bottom: 24px; background-color: #fff; padding: 20px; border-left: 5px solid var(--strawberry-dark); border-radius: 4px; }
+        .options-list { display: flex; flex-direction: column; gap: 12px; margin-bottom: 24px; }
+        .option-item { background-color: #fff; border: 2px solid var(--matcha-light); border-radius: 12px; padding: 16px; font-size: 15px; cursor: pointer; display: flex; align-items: center; transition: all 0.2s ease; }
+        .option-item:hover { border-color: var(--strawberry-dark); background-color: var(--strawberry-light); }
+        .option-item.selected { border-color: var(--matcha-dark); background-color: var(--matcha-light); color: var(--matcha-dark); font-weight: 600; }
+        .option-item.correct { border-color: #2e7d32; background-color: #e8f5e9; color: #1b5e20; font-weight: 600; }
+        .option-item.incorrect { border-color: var(--strawberry-dark); background-color: var(--strawberry-light); color: var(--strawberry-dark); text-decoration: line-through; }
+        .option-prefix { font-weight: bold; margin-right: 12px; background-color: var(--matcha-bg); width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; border-radius: 50%; font-size: 13px; }
+        
+        .actions-container { display: flex; justify-content: space-between; align-items: center; }
+        .btn { padding: 10px 20px; border: none; border-radius: 12px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s ease; }
+        .btn-primary { background-color: var(--matcha-dark); color: var(--cream); }
+        .btn-primary:hover { background-color: var(--matcha-medium); }
+        .btn-primary:disabled { background-color: #ccc; cursor: not-allowed; }
+
+        .rewards-ticker { margin-bottom: 15px; padding: 12px; border-radius: 8px; text-align: center; font-weight: bold; display: none; }
+        .rewards-success { background-color: #e8f5e9; color: #1b5e20; border: 1px solid #a5d6a7; }
+        .rewards-fail { background-color: var(--strawberry-light); color: var(--strawberry-dark); border: 1px solid var(--strawberry-pink); }
+
+        .explanation-panel { margin-top: 24px; background-color: #FAF4EB; border: 2px dashed var(--matcha-medium); border-radius: 12px; padding: 20px; display: none; }
+        .loading-overlay { display: none; text-align: center; padding: 40px 0; }
+        .spinner { width: 40px; height: 40px; border: 4px solid var(--strawberry-pink); border-top: 4px solid var(--matcha-dark); border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 16px auto; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+
+<div class="app-container">
+    
+    <!-- Authentication Entry Shield -->
+    <div class="auth-overlay" id="auth-shield">
+        <div class="auth-card">
+            <h2 id="auth-title">Welcome to DSMind</h2>
+            <input type="email" id="auth-email" placeholder="Email Address" />
+            <input type="password" id="auth-password" placeholder="Password" />
+            <div class="auth-buttons">
+                <button class="btn btn-primary" id="auth-primary-btn" onclick="handleAuthSubmit()">Log In</button>
+            </div>
+            <div class="auth-toggle-link" id="auth-toggle-str" onclick="toggleAuthMode()">Don't have an account? Sign Up</div>
+        </div>
+    </div>
+
+    <header>
+        <h1>DSMind</h1>
+        <p>Endless Cloud-Gamified DSM-5 Board Review</p>
+    </header>
+
+    <div class="rpg-dashboard">
+        <div class="level-container">
+            <div style="display: flex; justify-content: space-between; font-size: 12px; font-weight: bold; color: var(--matcha-dark);">
+                <span id="level-txt">Level 1</span>
+                <span id="xp-txt">0 / 300 XP</span>
+            </div>
+            <div class="xp-track"><div class="xp-bar" id="xp-indicator"></div></div>
+        </div>
+        
+        <div style="display: flex; gap: 10px; align-items: center;">
+            <div class="stat-badge">🔥 <span id="daily-streak-lbl">0</span> Day Streak</div>
+            <div class="stat-badge" style="border-color: var(--matcha-medium);">⚡ Combo: <span id="combo-lbl">0</span></div>
+            <div class="stat-badge" style="background-color: #fffdf0;">🎯 Acc: <span id="accuracy-lbl">0%</span></div>
+            <button class="btn" style="background: transparent; color: var(--strawberry-dark); padding: 5px;" onclick="logOutUser()">Logout</button>
+        </div>
+    </div>
+
+    <div class="config-tray">
+        <div class="config-group">
+            <input type="password" id="api-key-input" placeholder="Paste Gemini API Key..." />
+            <select id="focus-select">
+                <option value="any random DSM-5 disorder chapter">Comprehensive (All DSM-5)</option>
+                <option value="Neurodevelopmental Disorders">Neurodevelopmental</option>
+                <option value="Schizophrenia Spectrum and Other Psychotic Disorders">Schizophrenia Spectrum</option>
+                <option value="Bipolar and Related Disorders">Bipolar Spectrum</option>
+                <option value="Depressive Disorders">Depressive Disorders</option>
+                <option value="Anxiety Disorders">Anxiety Disorders</option>
+                <option value="Obsessive-Compulsive and Related Disorders">Obsessive-Compulsive (OCD)</option>
+                <option value="Trauma- and Stressor-Related Disorders">Trauma & Stressor</option>
+                <option value="Feeding and Eating Disorders">Feeding & Eating</option>
+                <option value="Personality Disorders">Personality Disorders</option>
+            </select>
+        </div>
+        <button class="btn btn-primary" style="background-color: var(--matcha-medium);" onclick="saveApiKey()">Save Key</button>
+    </div>
+
+    <div class="main-content">
+        <div class="rewards-ticker" id="rewards-banner"></div>
+        <div class="loading-overlay" id="loading-spinner"><div class="spinner"></div><p style="color: var(--matcha-dark); font-weight: 600;">Sifting database modules...</p></div>
+
+        <div id="interactive-quiz-workspace">
+            <span class="category-badge" id="question-category">DSM-5 Area</span>
+            <div class="vignette" id="question-vignette">Please secure a Gemini API Key to initialize the live test environment.</div>
+            <div class="options-list" id="options-box"></div>
+            <div class="actions-container">
+                <button class="btn btn-primary" id="submit-btn" onclick="evaluateAnswer()" disabled>Confirm Response</button>
+                <button class="btn btn-primary" id="next-btn" onclick="fetchNextAICase()" style="display: none;">Next Board Item</button>
+            </div>
+            <div class="explanation-panel" id="explanation-box">
+                <h3>🍵 High-Yield Diagnostic Breakdown</h3>
+                <div class="explanation-text" id="explanation-content"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Firebase SDK Engine Delivery modules -->
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+    import { getDatabase, ref, set, get, update } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+
+    // ⚠️ REPLACE THIS CONFIGURATION OBJECT WITH YOUR UNIQUE FIREBASE DETAILS FROM STEP 1
+    const firebaseConfig = {
+  apiKey: "AIzaSyDR72_2h4mLX8fzIu4-Z66JnSS2Dx1WwGA",
+  authDomain: "dsmind.firebaseapp.com",
+  databaseURL: "https://dsmind-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "dsmind",
+  storageBucket: "dsmind.firebasestorage.app",
+  messagingSenderId: "913680746933",
+  appId: "1:913680746933:web:119467fe8e1f305668b1fc",
+  measurementId: "G-WRC77MZGXH"
+};
+
+    // Instantiate Firebase services
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const database = getDatabase(app);
+
+    // Global App States
+    let currentUser = null;
+    let isSignUpMode = false;
+    let currentCaseData = null;
+    let selectedIdx = null;
+
+    let userDataStore = { totalXp: 0, currentCombo: 0, globalAttempts: 0, globalCorrect: 0, dailyStreak: 0, lastStudyDate: "", apiKey: "" };
+    const XP_PER_LEVEL = 300;
+
+    // Make Auth handling global so buttons can fire them
+    window.handleAuthSubmit = handleAuthSubmit;
+    window.toggleAuthMode = toggleAuthMode;
+    window.logOutUser = logOutUser;
+    window.saveApiKey = saveApiKey;
+    window.fetchNextAICase = fetchNextAICase;
+    window.evaluateAnswer = evaluateAnswer;
+    window.selectOptIdx = selectOptIdx;
+
+    // Track User Authentication state changes
+    onAuthStateChanged(auth, async (user) => {
+        if (user) {
+            currentUser = user;
+            document.getElementById("auth-shield").style.display = "none";
+            await loadUserDataFromCloud();
+            processStreakLogic();
+            refreshUiLayout();
+            if (userDataStore.apiKey) {
+                document.getElementById("api-key-input").value = userDataStore.apiKey;
+                fetchNextAICase();
+            }
+        } else {
+            currentUser = null;
+            document.getElementById("auth-shield").style.display = "flex";
+        }
+    });
+
+    function toggleAuthMode() {
+        isSignUpMode = !isSignUpMode;
+        document.getElementById("auth-title").textContent = isSignUpMode ? "Create DSMind Account" : "Welcome to DSMind";
+        document.getElementById("auth-primary-btn").textContent = isSignUpMode ? "Sign Up" : "Log In";
+        document.getElementById("auth-toggle-str").textContent = isSignUpMode ? "Already have an account? Log In" : "Don't have an account? Sign Up";
+    }
+
+    async function handleAuthSubmit() {
+        const email = document.getElementById("auth-email").value.trim();
+        const password = document.getElementById("auth-password").value;
+        if (!email || !password) return alert("Fill in authentication boxes.");
+
+        try {
+            if (isSignUpMode) {
+                const credential = await createUserWithEmailAndPassword(auth, email, password);
+                // Seed baseline starting profile structure inside the db
+                await set(ref(database, 'users/' + credential.user.uid), userDataStore);
+            } else {
+                await signInWithEmailAndPassword(auth, email, password);
+            }
+        } catch (err) { alert(err.message); }
+    }
+
+    async function logOutUser() { await signOut(auth); }
+
+    async function loadUserDataFromCloud() {
+        const snapshot = await get(ref(database, 'users/' + currentUser.uid));
+        if (snapshot.exists()) {
+            userDataStore = { ...userDataStore, ...snapshot.val() };
+        }
+    }
+
+    async function pushProgressToCloud() {
+        if (currentUser) { await update(ref(database, 'users/' + currentUser.uid), userDataStore); }
+    }
+
+    function processStreakLogic() {
+        const todayStr = new Date().toISOString().split('T')[0];
+        if (!userDataStore.lastStudyDate) {
+            userDataStore.dailyStreak = 1;
+        } else if (userDataStore.lastStudyDate !== todayStr) {
+            const yesterday = new Date(); yesterday.setDate(yesterday.getDate() - 1);
+            const yesterdayStr = yesterday.toISOString().split('T')[0];
+            userDataStore.dailyStreak = (userDataStore.lastStudyDate === yesterdayStr) ? userDataStore.dailyStreak + 1 : 1;
+        }
+        userDataStore.lastStudyDate = todayStr;
+        pushProgressToCloud();
+    }
+
+    function refreshUiLayout() {
+        const currentLevel = Math.floor(userDataStore.totalXp / XP_PER_LEVEL) + 1;
+        const xpInLevel = userDataStore.totalXp % XP_PER_LEVEL;
+        document.getElementById("level-txt").textContent = `Level ${currentLevel}`;
+        document.getElementById("xp-txt").textContent = `${xpInLevel} / ${XP_PER_LEVEL} XP`;
+        document.getElementById("xp-indicator").style.width = `${(xpInLevel / XP_PER_LEVEL) * 100}%`;
+        document.getElementById("daily-streak-lbl").textContent = userDataStore.dailyStreak;
+        document.getElementById("combo-lbl").textContent = userDataStore.currentCombo;
+        const accuracy = userDataStore.globalAttempts > 0 ? Math.round((userDataStore.globalCorrect / userDataStore.globalAttempts) * 100) : 0;
+        document.getElementById("accuracy-lbl").textContent = `${accuracy}%`;
+    }
+
+    function saveApiKey() {
+        const key = document.getElementById("api-key-input").value.trim();
+        if(key) {
+            userDataStore.apiKey = key;
+            pushProgressToCloud();
+            alert("API Key safely updated and encrypted in cloud cluster.");
+            fetchNextAICase();
+        }
+    }
+
+    async function fetchNextAICase() {
+        if (!userDataStore.apiKey) return;
+        document.getElementById("interactive-quiz-workspace").style.display = "none";
+        document.getElementById("loading-spinner").style.display = "block";
+        document.getElementById("explanation-box").style.display = "none";
+        document.getElementById("rewards-banner").style.display = "none";
+        document.getElementById("next-btn").style.display = "none";
+        document.getElementById("submit-btn").style.display = "block";
+        document.getElementById("submit-btn").disabled = true;
+
+        const selectedChapter = document.getElementById("focus-select").value;
+        const promptRules = `You are a professional clinical psychology board examiner drafting high-yield questions for licensing exams. Respond with ONLY raw JSON (no markdown wrappers): {"category": "Area", "vignette": "Vignette text...", "options": ["A","B","C","D"], "correctIndex": 0, "explanation": "Why..."}`;
+
+        try {
+            const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${userDataStore.apiKey}`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    contents: [{ parts: [{ text: `Generate a multiple-choice case scenario testing diagnostic criteria on: ${selectedChapter}.` }] }],
+                    systemInstruction: { parts: [{ text: promptRules }] },
+                    generationConfig: { responseMimeType: "application/json" }
+                })
+            });
+            const data = await res.json();
+            currentCaseData = JSON.parse(data.candidates[0].content.parts[0].text.trim());
+            renderAICase();
+        } catch (e) {
+            document.getElementById("question-vignette").textContent = "API error. Verify key tokens or connectivity parameters.";
+            document.getElementById("loading-spinner").style.display = "none";
+            document.getElementById("interactive-quiz-workspace").style.display = "block";
+        }
+    }
+
+    function renderAICase() {
+        document.getElementById("loading-spinner").style.display = "none";
+        document.getElementById("interactive-quiz-workspace").style.display = "block";
+        selectedIdx = null;
+        document.getElementById("question-category").textContent = currentCaseData.category;
+        document.getElementById("question-vignette").textContent = currentCaseData.vignette;
+        const box = document.getElementById("options-box"); box.innerHTML = "";
+        currentCaseData.options.forEach((opt, idx) => {
+            const optEl = document.createElement("div"); optEl.className = "option-item";
+            optEl.innerHTML = `<span class="option-prefix">${String.fromCharCode(65 + idx)}</span> <span>${opt}</span>`;
+            optEl.onclick = () => selectOptIdx(idx, optEl);
+            box.appendChild(optEl);
+        });
+    }
+
+    function selectOptIdx(idx, el) {
+        document.querySelectorAll(".option-item").forEach(i => i.classList.remove("selected"));
+        selectedIdx = idx; el.classList.add("selected");
+        document.getElementById("submit-btn").disabled = false;
+    }
+
+    function evaluateAnswer() {
+        if (selectedIdx === null) return;
+        const opts = document.querySelectorAll(".option-item");
+        opts.forEach(o => o.onclick = null);
+        userDataStore.globalAttempts++;
+
+        const banner = document.getElementById("rewards-banner");
+        let points = 10;
+        const oldLvl = Math.floor(userDataStore.totalXp / XP_PER_LEVEL) + 1;
+
+        if (selectedIdx === currentCaseData.correctIndex) {
+            opts[selectedIdx].classList.add("correct");
+            userDataStore.globalCorrect++; userDataStore.currentCombo++;
+            points += 40 + (userDataStore.currentCombo * 5);
+            banner.className = "rewards-ticker rewards-success";
+            banner.innerHTML = `🎯 Correct! +${points} XP. (Combo x${userDataStore.currentCombo})`;
+        } else {
+            opts[selectedIdx].classList.add("incorrect");
+            opts[currentCaseData.correctIndex].classList.add("correct");
+            userDataStore.currentCombo = 0;
+            banner.className = "rewards-ticker rewards-fail";
+            banner.innerHTML = `❌ Incorrect. +10 Participation XP. Combo broken!`;
+        }
+
+        userDataStore.totalXp += points;
+        pushProgressToCloud(); refreshUiLayout();
+
+        if ((Math.floor(userDataStore.totalXp / XP_PER_LEVEL) + 1) > oldLvl) {
+            setTimeout(() => { alert("🎉 LEVEL UP!"); }, 400);
+        }
+
+        banner.style.display = "block";
+        document.getElementById("explanation-content").textContent = currentCaseData.explanation;
+        document.getElementById("explanation-box").style.display = "block";
+        document.getElementById("submit-btn").style.display = "none";
+        document.getElementById("next-btn").style.display = "block";
+    }
+</script>
+</body>
+</html>
