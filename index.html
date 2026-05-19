@@ -30,7 +30,6 @@
         header h1 { font-size: 28px; letter-spacing: 2px; margin-bottom: 4px; font-weight: 800; }
         header p { font-size: 12px; color: var(--strawberry-pink); text-transform: uppercase; letter-spacing: 2px; font-weight: bold; }
 
-        /* Auth Screen Shield Overlay */
         .auth-overlay {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: var(--cream);
             z-index: 100; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 40px;
@@ -45,7 +44,6 @@
         .auth-buttons button { flex: 1; }
         .auth-toggle-link { margin-top: 15px; text-align: center; font-size: 13px; color: var(--matcha-medium); cursor: pointer; text-decoration: underline; }
 
-        /* Dashboard and System Controls */
         .rpg-dashboard { background-color: var(--strawberry-light); padding: 15px 24px; border-bottom: 2px solid rgba(95, 125, 86, 0.1); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; }
         .stat-badge { background: #fff; padding: 8px 14px; border-radius: 12px; box-shadow: 0 2px 6px rgba(0,0,0,0.05); display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 700; color: var(--matcha-dark); border: 1px solid var(--strawberry-pink); }
         .level-container { display: flex; flex-direction: column; width: 200px; }
@@ -56,7 +54,6 @@
         .config-group { display: flex; align-items: center; gap: 12px; }
         .config-tray select { padding: 8px 12px; border: 2px solid var(--matcha-light); border-radius: 8px; font-size: 13px; background-color: #fff; outline: none; font-weight: 600; color: var(--matcha-dark); }
 
-        /* Workspace Panels */
         .main-content { padding: 30px; flex-grow: 1; position: relative; }
         .category-badge { display: inline-block; background-color: var(--matcha-light); color: var(--matcha-dark); padding: 6px 14px; border-radius: 20px; font-size: 11px; font-weight: 700; text-transform: uppercase; margin-bottom: 16px; }
         .vignette { font-size: 16px; line-height: 1.6; margin-bottom: 24px; background-color: #fff; padding: 20px; border-left: 5px solid var(--strawberry-dark); border-radius: 4px; }
@@ -87,7 +84,6 @@
 <body>
 
 <div class="app-container">
-    
     <div class="auth-overlay" id="auth-shield">
         <div class="auth-card">
             <h2 id="auth-title">Welcome to DSMind</h2>
@@ -165,18 +161,18 @@
     import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
     import { getDatabase, ref, set, get, update } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
-    // 1️⃣ YOUR FIREBASE CONFIG MUST LIVE RIGHT HERE (Around Line 105):
+    // 🛠️ RE-PASTE YOUR ACTUAL WEB API CONFIG KEY VALUES HERE FOR LOGIN PROTECTION
     const firebaseConfig = {
-        apiKey: "AIzaSyYourActualKeyHere",
-        authDomain: "dsmind-xxxxx.firebaseapp.com",
-        databaseURL: "https://dsmind-xxxxx-default-rtdb.firebaseio.com",
-        projectId: "dsmind-xxxxx",
-        storageBucket: "dsmind-xxxxx.appspot.com",
-        messagingSenderId: "1234567890",
-        appId: "1:1234567890:web:abcdef12345"
-    }; // <-- Make sure this closing brace and semicolon are intact!
+  apiKey: "AIzaSyDR72_2h4mLX8fzIu4-Z66JnSS2Dx1WwGA",
+  authDomain: "dsmind.firebaseapp.com",
+  databaseURL: "https://dsmind-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "dsmind",
+  storageBucket: "dsmind.firebasestorage.app",
+  messagingSenderId: "913680746933",
+  appId: "1:913680746933:web:119467fe8e1f305668b1fc",
+  measurementId: "G-WRC77MZGXH"
+};
 
-    // 2️⃣ THE REST OF THE ENGINE INITIALIZES BELOW IT:
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const database = getDatabase(app);
@@ -201,9 +197,7 @@
         if (user) {
             currentUser = user;
             document.getElementById("auth-shield").style.display = "none";
-            
             await Promise.all([loadUserDataFromCloud(), loadGlobalApiKey()]);
-            
             processStreakLogic();
             refreshUiLayout();
             fetchNextAICase();
@@ -219,10 +213,9 @@
             if (snapshot.exists()) {
                 globalSecretApiKey = snapshot.val().trim();
             } else {
-                console.error("Centralized key could not be located in Firebase configuration paths.");
                 document.getElementById("question-vignette").textContent = "Administrative Error: Shared AI Access Key is missing from the database.";
             }
-        } catch(e) { console.error("Database handshake block issue:", e); }
+        } catch(e) { console.error("Database handshake issue:", e); }
     }
 
     function toggleAuthMode() {
@@ -235,8 +228,7 @@
     async function handleAuthSubmit() {
         const email = document.getElementById("auth-email").value.trim();
         const password = document.getElementById("auth-password").value;
-        if (!email || !password) return alert("Please fill in both authentication fields.");
-
+        if (!email || !password) return alert("Please fill in both fields.");
         try {
             if (isSignUpMode) {
                 const credential = await createUserWithEmailAndPassword(auth, email, password);
@@ -251,9 +243,7 @@
 
     async function loadUserDataFromCloud() {
         const snapshot = await get(ref(database, 'users/' + currentUser.uid));
-        if (snapshot.exists()) {
-            userDataStore = { ...userDataStore, ...snapshot.val() };
-        }
+        if (snapshot.exists()) { userDataStore = { ...userDataStore, ...snapshot.val() }; }
     }
 
     async function pushProgressToCloud() {
@@ -285,6 +275,7 @@
         document.getElementById("accuracy-lbl").textContent = `${accuracy}%`;
     }
 
+    // 🚀 STABLE PARSING LOGIC ENGINE (Includes user parameters requested)
     async function fetchNextAICase() {
         if (!globalSecretApiKey) return;
         document.getElementById("interactive-quiz-workspace").style.display = "none";
@@ -297,7 +288,6 @@
 
         const selectedChapter = document.getElementById("focus-select").value;
         
-        // Randomization Arrays
         const ages = ["a 6-year-old child", "a 17-year-old adolescent", "a 24-year-old graduate student", "a 42-year-old worker", "a 71-year-old retiree"];
         const environments = ["an outpatient therapy group", "an emergency room intake", "a primary care office", "an inpatient psychiatric unit"];
         const qualifiers = ["atypical behaviors", "sudden symptom increase", "complex stressors", "severe routine impairment"];
@@ -306,7 +296,6 @@
         const rEnv = environments[Math.floor(Math.random() * environments.length)];
         const rQual = qualifiers[Math.floor(Math.random() * qualifiers.length)];
 
-        // Simplified prompt structure to keep the model focused on format
         const coreInstructions = `Create a distinct DSM-5 multiple-choice board question regarding: ${selectedChapter}. 
 Profile target: ${rAge} evaluated within ${rEnv} showing ${rQual}.
 
@@ -320,6 +309,7 @@ You must return a raw JSON object matching this exact example layout structure:
                 body: JSON.stringify({
                     contents: [{ parts: [{ text: coreInstructions }] }],
                     generationConfig: { 
+                        // Feature A: Removed explicit Schema Restriction to prevent layout generation bottlenecks
                         responseMimeType: "application/json",
                         temperature: 1.0
                     }
@@ -331,16 +321,15 @@ You must return a raw JSON object matching this exact example layout structure:
             
             let rawText = data.candidates[0].content.parts[0].text.trim();
             
-            // Clear markdown blocks if they appear
             if (rawText.includes("```")) {
                 rawText = rawText.replace(/```json/gi, "").replace(/```/g, "").trim();
             }
             
-            // Isolate JSON curly brace frame
+            // Feature B: Aggressive character index cropping to pull only content found inside core curly brace fields
             const firstBrace = rawText.indexOf("{");
             const lastBrace = rawText.lastIndexOf("}");
             
-            // 🛡️ RECOVERY ESCAPE ENGINE: If it missed braces entirely, automatically rerun once
+            // Auto Recovery Escape: If structural elements fail completely, rerun natively once
             if (firstBrace === -1 || lastBrace === -1) {
                 console.warn("Structural framing lost. Auto-retriggering module request.");
                 return fetchNextAICase(); 
