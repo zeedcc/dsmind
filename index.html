@@ -428,9 +428,9 @@ You must return ONLY a raw JSON object matching this exact schema layout structu
 {"category":"${selectedChapter}","vignette":"Case details...","options":["A","B","C","D"],"correctIndex":0,"explanation":"Breakdown..."}`;
 
         try {
-            /* ⚡ UPGRADED APEX MODEL ROUTING TO GEMINI-2.5-PRO FOR COMPLEX BOARDS TESTING */
-            const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-pro:generateContent?key=${activeExecutionKey}`, {
-                method: "POST",
+            /* ⚡ ROUTING ENGINE TO NEWEST FLASH GENERATION */
+const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key=${activeExecutionKey}`, {
+    method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                     contents: [{ parts: [{ text: coreInstructions }] }],
