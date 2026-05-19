@@ -32,10 +32,10 @@
 
         .auth-overlay {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: var(--cream);
-            z-index: 100; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 40px;
+            z-index: 100; display: flex; flex-direction: column; justify-content: flex-start; align-items: center; padding: 40px; overflow-y: auto;
         }
         .auth-card {
-            width: 100%; max-width: 400px; padding: 30px; border-radius: 20px; border: 3px solid var(--matcha-light); background: #fff; box-shadow: var(--shadow);
+            width: 100%; max-width: 460px; padding: 30px; border-radius: 20px; border: 3px solid var(--matcha-light); background: #fff; box-shadow: var(--shadow); margin-bottom: 20px;
         }
         .auth-card h2 { color: var(--matcha-dark); margin-bottom: 20px; text-align: center; }
         .auth-card input { width: 100%; padding: 12px; margin-bottom: 14px; border: 2px solid var(--matcha-light); border-radius: 8px; outline: none; }
@@ -43,6 +43,17 @@
         .auth-buttons { display: flex; gap: 10px; }
         .auth-buttons button { flex: 1; }
         .auth-toggle-link { margin-top: 15px; text-align: center; font-size: 13px; color: var(--matcha-medium); cursor: pointer; text-decoration: underline; }
+        
+        /* 📚 INTEGRATED STEP-BY-STEP KEY CREATION GUIDE VISUALS */
+        .guide-card {
+            width: 100%; max-width: 460px; padding: 24px; border-radius: 20px; border: 2px dashed var(--matcha-medium); background: #FAF6F0; color: var(--text-dark);
+        }
+        .guide-card h3 { color: var(--matcha-dark); margin-bottom: 12px; display: flex; align-items: center; gap: 8px; font-size: 16px; }
+        .guide-steps { list-style: none; display: flex; flex-direction: column; gap: 12px; }
+        .guide-steps li { font-size: 13px; line-height: 1.4; display: flex; gap: 10px; align-items: flex-start; }
+        .step-num { background: var(--matcha-dark); color: var(--cream); width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; border-radius: 50%; font-weight: bold; font-size: 11px; flex-shrink: 0; margin-top: 2px; }
+        .guide-steps a { color: var(--strawberry-dark); font-weight: bold; text-decoration: underline; }
+        .highlight-text { background: #ffebeb; padding: 2px 6px; border-radius: 4px; font-weight: 600; color: var(--strawberry-dark); }
 
         .rpg-dashboard { background-color: var(--strawberry-light); padding: 15px 24px; border-bottom: 2px solid rgba(95, 125, 86, 0.1); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; }
         .stat-badge { background: #fff; padding: 8px 14px; border-radius: 12px; box-shadow: 0 2px 6px rgba(0,0,0,0.05); display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 700; color: var(--matcha-dark); border: 1px solid var(--strawberry-pink); }
@@ -87,12 +98,37 @@
     <div class="auth-overlay" id="auth-shield">
         <div class="auth-card">
             <h2 id="auth-title">Welcome to DSMind</h2>
+            
             <input type="email" id="auth-email" placeholder="Email Address" />
             <input type="password" id="auth-password" placeholder="Password" />
+            <input type="text" id="auth-gemini-key" placeholder="Paste Personal Gemini Key (Highly Recommended)" />
+
             <div class="auth-buttons">
                 <button class="btn btn-primary" id="auth-primary-btn" onclick="handleAuthSubmit()">Log In</button>
             </div>
             <div class="auth-toggle-link" id="auth-toggle-str" onclick="toggleAuthMode()">Don't have an account? Sign Up</div>
+        </div>
+
+        <div class="guide-card">
+            <h3>🔑 How to Get a Free Gemini Key (1-Minute Guide)</h3>
+            <ol class="guide-steps">
+                <li>
+                    <span class="step-num">1</span>
+                    <span>Go to <a href="https://aistudio.google.com/" target="_blank">Google AI Studio</a> and log in with any standard Gmail account.</span>
+                </li>
+                <li>
+                    <span class="step-num">2</span>
+                    <span>Tap the blue <span class="highlight-text">Get API key</span> button found on the top left sidebar.</span>
+                </li>
+                <li>
+                    <span class="step-num">3</span>
+                    <span>Click <span class="highlight-text">Create API key</span>, then choose <span class="highlight-text">Create API key in a new project</span>.</span>
+                </li>
+                <li>
+                    <span class="step-num">4</span>
+                    <span>Copy the long alphanumeric code string that pops up and paste it into the field box directly above to log in!</span>
+                </li>
+            </ol>
         </div>
     </div>
 
@@ -161,18 +197,15 @@
     import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
     import { getDatabase, ref, set, get, update } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
-    // ⚠️ CRITICAL STEP: Paste your actual FIREBASE WEB APP API KEY details here!
-    // Do not paste your Gemini key into this object block.
     const firebaseConfig = {
-  apiKey: "AIzaSyDR72_2h4mLX8fzIu4-Z66JnSS2Dx1WwGA",
-  authDomain: "dsmind.firebaseapp.com",
-  databaseURL: "https://dsmind-default-rtdb.asia-southeast1.firebasedatabase.app",
-  projectId: "dsmind",
-  storageBucket: "dsmind.firebasestorage.app",
-  messagingSenderId: "913680746933",
-  appId: "1:913680746933:web:119467fe8e1f305668b1fc",
-  measurementId: "G-WRC77MZGXH"
-};
+        apiKey: "YOUR_FIREBASE_WEB_API_KEY",
+        authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+        databaseURL: "https://YOUR_PROJECT_ID-default-rtdb.firebaseio.com",
+        projectId: "YOUR_PROJECT_ID",
+        storageBucket: "YOUR_PROJECT_ID.appspot.com",
+        messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+        appId: "YOUR_APP_ID"
+    };
 
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
@@ -182,7 +215,7 @@
     let isSignUpMode = false;
     let currentCaseData = null;
     let selectedIdx = null;
-    let globalSecretApiKey = ""; 
+    let activeExecutionKey = ""; 
 
     let userDataStore = { totalXp: 0, currentCombo: 0, globalAttempts: 0, globalCorrect: 0, dailyStreak: 0, lastStudyDate: "" };
     const XP_PER_LEVEL = 300;
@@ -198,7 +231,15 @@
         if (user) {
             currentUser = user;
             document.getElementById("auth-shield").style.display = "none";
-            await Promise.all([loadUserDataFromCloud(), loadGlobalApiKey()]);
+            await loadUserDataFromCloud();
+            
+            const personalStoredKey = localStorage.getItem(`gemini_key_${currentUser.uid}`);
+            if (personalStoredKey) {
+                activeExecutionKey = personalStoredKey;
+            } else {
+                await loadFallbackGlobalApiKey();
+            }
+            
             processStreakLogic();
             refreshUiLayout();
             fetchNextAICase();
@@ -208,15 +249,15 @@
         }
     });
 
-    async function loadGlobalApiKey() {
+    async function loadFallbackGlobalApiKey() {
         try {
             const snapshot = await get(ref(database, 'global_config/gemini_api_key'));
             if (snapshot.exists()) {
-                globalSecretApiKey = snapshot.val().trim();
+                activeExecutionKey = snapshot.val().trim();
             } else {
-                document.getElementById("question-vignette").textContent = "Administrative Error: Shared AI Access Key is missing from the database paths.";
+                document.getElementById("question-vignette").textContent = "Administrative Error: Default Shared Quota Key is missing from cloud nodes.";
             }
-        } catch(e) { console.error("Database handshake issue:", e); }
+        } catch(e) { console.error("Database initialization anomaly:", e); }
     }
 
     function toggleAuthMode() {
@@ -229,13 +270,21 @@
     async function handleAuthSubmit() {
         const email = document.getElementById("auth-email").value.trim();
         const password = document.getElementById("auth-password").value;
+        const potentialCustomKey = document.getElementById("auth-gemini-key").value.trim();
+        
         if (!email || !password) return alert("Please fill in both fields.");
+        
         try {
+            let userCredential;
             if (isSignUpMode) {
-                const credential = await createUserWithEmailAndPassword(auth, email, password);
-                await set(ref(database, 'users/' + credential.user.uid), userDataStore);
+                userCredential = await createUserWithEmailAndPassword(auth, email, password);
+                await set(ref(database, 'users/' + userCredential.user.uid), userDataStore);
             } else {
-                await signInWithEmailAndPassword(auth, email, password);
+                userCredential = await signInWithEmailAndPassword(auth, email, password);
+            }
+            
+            if (potentialCustomKey) {
+                localStorage.setItem(`gemini_key_${userCredential.user.uid}`, potentialCustomKey);
             }
         } catch (err) { alert(err.message); }
     }
@@ -276,9 +325,8 @@
         document.getElementById("accuracy-lbl").textContent = `${accuracy}%`;
     }
 
-    // 🚀 CLEAN PRODUCTION-GRADE GENERATION CONFIGURATION
     async function fetchNextAICase() {
-        if (!globalSecretApiKey) return;
+        if (!activeExecutionKey) return;
         document.getElementById("interactive-quiz-workspace").style.display = "none";
         document.getElementById("loading-spinner").style.display = "block";
         document.getElementById("explanation-box").style.display = "none";
@@ -304,7 +352,7 @@ You must return a raw JSON object matching this exact example layout structure:
 {"category":"${selectedChapter}","vignette":"Case details...","options":["A","B","C","D"],"correctIndex":0,"explanation":"Breakdown..."}`;
 
         try {
-            const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${globalSecretApiKey}`, {
+            const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${activeExecutionKey}`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
@@ -320,7 +368,7 @@ You must return a raw JSON object matching this exact example layout structure:
             if (data.error) throw new Error(data.error.message);
             
             if (!data.candidates || !data.candidates[0] || !data.candidates[0].content) {
-                throw new Error("Quota threshold reached or empty endpoint response structure received.");
+                throw new Error("Target data structure payload mismatch.");
             }
             
             let rawText = data.candidates[0].content.parts[0].text.trim();
@@ -333,12 +381,11 @@ You must return a raw JSON object matching this exact example layout structure:
             const lastBrace = rawText.lastIndexOf("}");
             
             if (firstBrace === -1 || lastBrace === -1) {
-                throw new Error("JSON string framing delimiters missing from generation text.");
+                throw new Error("Boundary framing elements lost.");
             }
             
             rawText = rawText.substring(firstBrace, lastBrace + 1);
             
-            // Advanced Cleaning: Erase illegal trailing commas or hidden carriage line feeds
             rawText = rawText
                 .replace(/,\s*([\]}])/g, '$1')
                 .replace(/[\u0000-\u001F\u007F-\u009F]/g, "");
@@ -347,8 +394,7 @@ You must return a raw JSON object matching this exact example layout structure:
                 currentCaseData = JSON.parse(rawText);
                 renderAICase();
             } catch (parseError) {
-                console.error("JSON formatting error:", parseError);
-                // Loop removed to preserve quota: show clean diagnostic message instead
+                console.error("JSON parse halt:", parseError);
                 document.getElementById("question-vignette").textContent = "The layout parsing engine hit a minor structural hiccup. Please click 'Next Board Item' or choose another category to request a clean file!";
                 document.getElementById("loading-spinner").style.display = "none";
                 document.getElementById("interactive-quiz-workspace").style.display = "block";
