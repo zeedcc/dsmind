@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>DSMind // Cloud Board Suite</title>
+    <script src="https://js.puter.com/v2/"></script>
     <style>
         :root {
             --matcha-dark: #3B5334;
@@ -98,8 +99,8 @@
         }
         .dashboard-actions .btn { flex: 1; justify-content: center; display: inline-flex; align-items: center; }
         
-        .config-tray { background-color: #FAF4EB; padding: 14px 16px; border-bottom: 1px solid rgba(95, 125, 86, 0.1); }
-        .config-group { display: flex; flex-direction: column; gap: 8px; width: 100%; }
+        .config-tray { background-color: #FAF4EB; padding: 14px 16px; border-bottom: 1px solid rgba(95, 125, 86, 0.1); display: flex; flex-direction: column; gap: 12px; }
+        .config-group { display: flex; flex-direction: column; gap: 6px; width: 100%; }
         .config-group span { font-size: 13px; font-weight: 700; color: var(--matcha-dark); }
         .config-tray select { width: 100%; padding: 10px 12px; border: 2px solid var(--matcha-light); border-radius: 8px; font-size: 13px; background-color: #fff; outline: none; font-weight: 600; color: var(--matcha-dark); }
 
@@ -143,8 +144,8 @@
             .stat-badge { padding: 8px 14px; font-size: 13px; width: auto; }
             .dashboard-actions { display: flex; width: auto; margin-top: 0; gap: 10px; }
             .dashboard-actions .btn { width: auto; }
-            .config-tray { padding: 12px 24px; }
-            .config-group { flex-direction: row; align-items: center; gap: 12px; }
+            .config-tray { padding: 12px 24px; flex-direction: row; justify-content: space-between; gap: 20px; }
+            .config-group { flex-direction: row; align-items: center; gap: 12px; width: auto; }
             .config-tray select { width: auto; }
             .main-content { padding: 30px; }
             .vignette { font-size: 16px; padding: 20px; }
@@ -163,7 +164,7 @@
             
             <input type="email" id="auth-email" placeholder="Email Address" />
             <input type="password" id="auth-password" placeholder="Password" />
-            <input type="text" id="auth-gemini-key" placeholder="Paste Personal Gemini Key (Highly Recommended)" />
+            <input type="text" id="auth-gemini-key" placeholder="Paste Gemini Key (Only for Gemini 2.5 Flash)" />
 
             <div class="auth-buttons">
                 <button class="btn btn-primary" id="auth-primary-btn" onclick="handleAuthSubmit()">Log In</button>
@@ -221,6 +222,15 @@
     </div>
 
     <div class="config-tray">
+        <div class="config-group">
+            <span>AI Intelligence Engine:</span>
+            <select id="model-select" onchange="fetchNextAICase()">
+                <option value="gemini">Gemini 2.5 Flash (via Key)</option>
+                <option value="gpt-4o">GPT-4o (Serverless Proxy)</option>
+                <option value="claude-3-5-sonnet">Claude 3.5 Sonnet (Serverless Proxy)</option>
+                <option value="llama-3-70b">Llama 3 70b (Serverless Proxy)</option>
+            </select>
+        </div>
         <div class="config-group">
             <span>Study Focus Area:</span>
             <select id="focus-select" onchange="fetchNextAICase()">
@@ -323,7 +333,7 @@
             if (snapshot.exists()) {
                 activeExecutionKey = snapshot.val().trim();
             } else {
-                document.getElementById("question-vignette").textContent = "Administrative Error: Default Shared Quota Key is missing from cloud nodes.";
+                console.log("No default fallback key detected in Firebase schema.");
             }
         } catch(e) { console.error("Database initialization anomaly:", e); }
     }
@@ -394,7 +404,7 @@
     }
 
     function clearLocalAppCache() {
-        if (confirm("This will clear cached data errors and request a clean layout connection. Your cloud account Level and Streaks are perfectly safe! Force engine reset?")) {
+        if (confirm("Force engine reset? This clears formatting hiccups instantly.")) {
             currentCaseData = null;
             selectedIdx = null;
             fetchNextAICase();
@@ -402,7 +412,6 @@
     }
 
     async function fetchNextAICase() {
-        if (!activeExecutionKey) return;
         document.getElementById("interactive-quiz-workspace").style.display = "none";
         document.getElementById("loading-spinner").style.display = "block";
         document.getElementById("explanation-box").style.display = "none";
@@ -412,6 +421,7 @@
         document.getElementById("submit-btn").disabled = true;
 
         const selectedChapter = document.getElementById("focus-select").value;
+        const selectedModel = document.getElementById("model-select").value;
         
         const ages = ["a 6-year-old child", "a 17-year-old adolescent", "a 24-year-old graduate student", "a 42-year-old worker", "a 71-year-old retiree"];
         const environments = ["an outpatient therapy group", "an emergency room intake", "a primary care office", "an inpatient psychiatric unit"];
@@ -424,64 +434,51 @@
         const coreInstructions = `Create a distinct DSM-5 multiple-choice board question regarding: ${selectedChapter}. 
 Profile target: ${rAge} evaluated within ${rEnv} showing ${rQual}.
 
-You must return ONLY a raw JSON object matching this exact schema layout structure, without any markdown formatting wrappers or extra dialogue strings around it:
+You must return ONLY a valid, parseable JSON object matching this exact schema structural layout, with zero surrounding text or conversational introduction markdown:
 {"category":"${selectedChapter}","vignette":"Case details...","options":["A","B","C","D"],"correctIndex":0,"explanation":"Breakdown..."}`;
 
+        let rawText = "";
+
         try {
-            /* ⚡ ROUTING ENGINE TO NEWEST FLASH GENERATION */
-const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key=${activeExecutionKey}`, {
-    method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    contents: [{ parts: [{ text: coreInstructions }] }],
-                    generationConfig: { 
-                        responseMimeType: "application/json",
-                        temperature: 0.8
-                    }
-                })
-            });
-            
-            const data = await res.json();
-            if (data.error) throw new Error(data.error.message);
-            
-            if (!data.candidates || !data.candidates[0] || !data.candidates[0].content) {
-                throw new Error("Target data structure payload mismatch.");
+            if (selectedModel === "gemini") {
+                if (!activeExecutionKey) {
+                    throw new Error("No Gemini API key supplied in login shield.");
+                }
+                const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${activeExecutionKey}`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        contents: [{ parts: [{ text: coreInstructions }] }],
+                        generationConfig: { responseMimeType: "application/json", temperature: 0.85 }
+                    })
+                });
+                const data = await res.json();
+                if (data.error) throw new Error(data.error.message);
+                rawText = data.candidates[0].content.parts[0].text.trim();
+
+            } else {
+                // 🚀 MULTI-MODEL DEPLOYMENT VIA PUTER INTERMEDIARY
+                // Resolves CORS restrictions instantly for GPT-4o, Claude 3.5 Sonnet, and Llama 3
+                const response = await puter.ai.chat(coreInstructions, { model: selectedModel });
+                rawText = response.message.content.trim();
             }
             
-            let rawText = data.candidates[0].content.parts[0].text.trim();
-            
+            // Clean markdown blocks if returned by less structured models
             if (rawText.includes("```")) {
                 rawText = rawText.replace(/```json/gi, "").replace(/```/g, "").trim();
             }
             
             const firstBrace = rawText.indexOf("{");
             const lastBrace = rawText.lastIndexOf("}");
-            
-            if (firstBrace === -1 || lastBrace === -1) {
-                throw new Error("Boundary framing elements lost.");
-            }
-            
+            if (firstBrace === -1 || lastBrace === -1) throw new Error("Frame markers dropped.");
             rawText = rawText.substring(firstBrace, lastBrace + 1);
-            
-            rawText = rawText
-                .replace(/,\s*([\]}])/g, '$1')
-                .replace(/[\u0000-\u001F\u007F-\u009F]/g, "");
 
-            try {
-                currentCaseData = JSON.parse(rawText);
-                renderAICase();
-            } catch (parseError) {
-                console.error("JSON parse halt:", parseError);
-                document.getElementById("question-vignette").textContent = "The layout parsing engine hit a minor structural hiccup. Please click 'Next Board Item' or choose another category to request a clean file!";
-                document.getElementById("loading-spinner").style.display = "none";
-                document.getElementById("interactive-quiz-workspace").style.display = "block";
-                document.getElementById("submit-btn").style.display = "none";
-                document.getElementById("next-btn").style.display = "block";
-            }
+            currentCaseData = JSON.parse(rawText);
+            renderAICase();
             
         } catch (e) {
-            console.error("Layout Handshake Log:", e);
-            document.getElementById("question-vignette").textContent = "The testing engine encountered an unexpected data layout formatting anomaly. Click another study area or tap Next to refresh.";
+            console.error("Multi-Engine Error Dispatcher Log:", e);
+            document.getElementById("question-vignette").textContent = `The selected engine [${selectedModel.toUpperCase()}] ran into an extraction formatting anomaly. Please click 'Next Board Item' or switch models to request a clean instance.`;
             document.getElementById("loading-spinner").style.display = "none";
             document.getElementById("interactive-quiz-workspace").style.display = "block";
         }
