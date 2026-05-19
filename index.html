@@ -297,39 +297,31 @@
 
         const selectedChapter = document.getElementById("focus-select").value;
         
-        // Randomized components to guarantee a fresh clinical profile variants on every click
-        const ageDemographics = ["a 6-year-old child accompanied by guardians", "a 17-year-old adolescent student", "a 24-year-old graduate", "a 42-year-old corporate worker", "a 71-year-old retiree"];
-        const clinicalSettings = ["an outpatient therapy group", "an emergency department intake room", "a primary care consultation", "an inpatient psychiatric unit evaluation"];
-        const presentationSeeds = ["presenting with nuanced atypical behaviors", "exhibiting a sudden change in symptom presentation", "managing complex psychosocial stressors", "showing clear functional impairment in daily routines"];
+        // Randomization Arrays
+        const ages = ["a 6-year-old child", "a 17-year-old adolescent", "a 24-year-old graduate student", "a 42-year-old worker", "a 71-year-old retiree"];
+        const environments = ["an outpatient therapy group", "an emergency room intake", "a primary care office", "an inpatient psychiatric unit"];
+        const qualifiers = ["atypical behaviors", "sudden symptom increase", "complex stressors", "severe routine impairment"];
         
-        const randomAge = ageDemographics[Math.floor(Math.random() * ageDemographics.length)];
-        const randomSetting = clinicalSettings[Math.floor(Math.random() * clinicalSettings.length)];
-        const randomSeed = presentationSeeds[Math.floor(Math.random() * presentationSeeds.length)];
+        const rAge = ages[Math.floor(Math.random() * ages.length)];
+        const rEnv = environments[Math.floor(Math.random() * environments.length)];
+        const rQual = qualifiers[Math.floor(Math.random() * qualifiers.length)];
 
-        const systematicPrompt = `Draft an entirely unique, creative multiple-choice board vignette focusing explicitly on the diagnostic criteria for: ${selectedChapter}. 
-The patient profile must specifically center around ${randomAge}, evaluated within ${randomSetting}, ${randomSeed}. Ensure options represent plausible differential diagnoses.
+        // Simplified prompt structure to keep the model focused on format
+        const coreInstructions = `Create a distinct DSM-5 multiple-choice board question regarding: ${selectedChapter}. 
+Profile target: ${rAge} evaluated within ${rEnv} showing ${rQual}.
 
-You must respond ONLY with a raw, valid JSON object matching this exact structural format. Do not include any introductory text, markdown formatting, or trailing text:
-{
-  "category": "DSM-5 Chapter Area",
-  "vignette": "Detailed clinical presentation vignette text here...",
-  "options": ["Option A Choice", "Option B Choice", "Option C Choice", "Option D Choice"],
-  "correctIndex": 0,
-  "explanation": "High-yield diagnostic breakdown text here..."
-}`;
+You must return a raw JSON object matching this exact example layout structure:
+{"category":"${selectedChapter}","vignette":"Case details...","options":["A","B","C","D"],"correctIndex":0,"explanation":"Breakdown..."}`;
 
         try {
-            const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent`, {
+            const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${globalSecretApiKey}`, {
                 method: "POST",
-                headers: { 
-                    "Content-Type": "application/json",
-                    "x-goog-api-key": globalSecretApiKey 
-                },
+                headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
-                    contents: [{ parts: [{ text: systematicPrompt }] }],
+                    contents: [{ parts: [{ text: coreInstructions }] }],
                     generationConfig: { 
                         responseMimeType: "application/json",
-                        temperature: 0.9
+                        temperature: 1.0
                     }
                 })
             });
@@ -339,22 +331,27 @@ You must respond ONLY with a raw, valid JSON object matching this exact structur
             
             let rawText = data.candidates[0].content.parts[0].text.trim();
             
-            // Clean out markdown identifiers if the engine accidentally formats them
+            // Clear markdown blocks if they appear
             if (rawText.includes("```")) {
                 rawText = rawText.replace(/```json/gi, "").replace(/```/g, "").trim();
             }
             
-            // Crop boundaries to eliminate conversational filler text
-            const startBrace = rawText.indexOf("{");
-            const endBrace = rawText.lastIndexOf("}");
-            if (startBrace !== -1 && endBrace !== -1) {
-                rawText = rawText.substring(startBrace, endBrace + 1);
+            // Isolate JSON curly brace frame
+            const firstBrace = rawText.indexOf("{");
+            const lastBrace = rawText.lastIndexOf("}");
+            
+            // 🛡️ RECOVERY ESCAPE ENGINE: If it missed braces entirely, automatically rerun once
+            if (firstBrace === -1 || lastBrace === -1) {
+                console.warn("Structural framing lost. Auto-retriggering module request.");
+                return fetchNextAICase(); 
             }
             
+            rawText = rawText.substring(firstBrace, lastBrace + 1);
             currentCaseData = JSON.parse(rawText);
             renderAICase();
+            
         } catch (e) {
-            console.error("Diagnostic Parsing Exception Error Log:", e);
+            console.error("Layout Handshake Log:", e);
             document.getElementById("question-vignette").textContent = "The testing engine encountered an unexpected data layout formatting anomaly. Click another study area or tap Next to refresh.";
             document.getElementById("loading-spinner").style.display = "none";
             document.getElementById("interactive-quiz-workspace").style.display = "block";
