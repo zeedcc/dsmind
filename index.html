@@ -312,7 +312,7 @@
 
         const selectedChapter = document.getElementById("focus-select").value;
         
-        // Randomized patient profiles to ensure fresh variations every click
+        // Dynamic profile parameters to completely prevent question repetition
         const ageDemographics = ["a 6-year-old child accompanied by guardians", "a 17-year-old adolescent student", "a 24-year-old graduate", "a 42-year-old corporate worker", "a 71-year-old retiree"];
         const clinicalSettings = ["an outpatient therapy group", "an emergency department intake room", "a primary care consultation", "an inpatient psychiatric unit evaluation"];
         const presentationSeeds = ["presenting with nuanced atypical behaviors", "demonstrating a sudden increase in symptom severity", "managing complex psychosocial stressors", "exhibiting clear functional impairment in daily routines"];
@@ -322,7 +322,8 @@
         const randomSeed = presentationSeeds[Math.floor(Math.random() * presentationSeeds.length)];
 
         try {
-            const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent`, {
+            // 🌐 UPGRADED TO THE STABLE v1 PRODUCTION ENDPOINT
+            const res = await fetch(`https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash:generateContent`, {
                 method: "POST",
                 headers: { 
                     "Content-Type": "application/json",
@@ -333,8 +334,7 @@
                     systemInstruction: { parts: [{ text: "You are a professional clinical psychology board examiner drafting high-yield questions for licensing exams. You must strictly output the results according to the requested JSON structure schema." }] },
                     generationConfig: { 
                         responseMimeType: "application/json",
-                        temperature: 0.9, // Balanced for great variety without formatting chaotic breakdowns
-                        // 🛠️ THE GOLDEN FIX: Strict schema definition rules out formatting errors
+                        temperature: 1.0, // High creativity setting for deep, varied question generation
                         responseSchema: {
                             type: "OBJECT",
                             properties: {
@@ -356,6 +356,29 @@
             });
             
             const data = await res.json();
+            
+            // Safety handler: Verify if Google returned an explicit API backend error
+            if (data.error) {
+                console.error("Google AI Service Alert:", data.error.message);
+                throw new Error(data.error.message);
+            }
+            
+            let rawText = data.candidates[0].content.parts[0].text.trim();
+            
+            // Clean out accidental markdown ticks if they creep out of the model engine
+            if (rawText.startsWith("```")) {
+                rawText = rawText.replace(/^```json\s*/i, "").replace(/```$/, "").trim();
+            }
+            
+            currentCaseData = JSON.parse(rawText);
+            renderAICase();
+        } catch (e) {
+            console.error("Detailed Debug Log:", e);
+            document.getElementById("question-vignette").textContent = "The testing engine encountered a structural formatting error. Tap another focus area or refresh to request a fresh board scenario.";
+            document.getElementById("loading-spinner").style.display = "none";
+            document.getElementById("interactive-quiz-workspace").style.display = "block";
+        }
+    }
             
             // Extract text cleanly, discarding any leftover hidden markdown text if it exists
             let rawText = data.candidates[0].content.parts[0].text.trim();
