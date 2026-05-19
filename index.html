@@ -165,9 +165,16 @@
     import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
     import { getDatabase, ref, set, get, update } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
-    // ⚠️ REPLACE THIS CONFIGURATION OBJECT WITH YOUR UNIQUE FIREBASE DETAILS FROM STEP 1
-    const firebaseConfig = {
-  apiKey: "AIzaSyYourActualPUBLICFirebaseKeyHere...", // <-- NOT the Gemini key!
+    // Import the functions you need from the SDKs you need
+import { initializeApp } from "firebase/app";
+import { getAnalytics } from "firebase/analytics";
+// TODO: Add SDKs for Firebase products that you want to use
+// https://firebase.google.com/docs/web/setup#available-libraries
+
+// Your web app's Firebase configuration
+// For Firebase JS SDK v7.20.0 and later, measurementId is optional
+const firebaseConfig = {
+  apiKey: "AIzaSyDR72_2h4mLX8fzIu4-Z66JnSS2Dx1WwGA",
   authDomain: "dsmind.firebaseapp.com",
   databaseURL: "https://dsmind-default-rtdb.asia-southeast1.firebasedatabase.app",
   projectId: "dsmind",
@@ -176,9 +183,11 @@
   appId: "1:913680746933:web:119467fe8e1f305668b1fc",
   measurementId: "G-WRC77MZGXH"
 };
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    const database = getDatabase(app);
+
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+const analytics = getAnalytics(app);
+const database = getDatabase(app);
 
     let currentUser = null;
     let isSignUpMode = false;
