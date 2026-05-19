@@ -296,11 +296,12 @@
         const rEnv = environments[Math.floor(Math.random() * environments.length)];
         const rQual = qualifiers[Math.floor(Math.random() * qualifiers.length)];
 
-        const coreInstructions = `Create a distinct DSM-5 multiple-choice board question regarding: ${selectedChapter}. 
-Profile target: ${rAge} evaluated within ${rEnv} showing ${rQual}.
+        // Strict, simplified instructions forcing standard string structures
+        const coreInstructions = `Generate a multiple-choice clinical board vignette for: ${selectedChapter}.
+Patient demographic: ${rAge} in ${rEnv} exhibiting ${rQual}.
 
-You must return a raw JSON object matching this exact example layout structure:
-{"category":"${selectedChapter}","vignette":"Case details...","options":["A","B","C","D"],"correctIndex":0,"explanation":"Breakdown..."}`;
+Provide your entire response as a single, valid minified JSON object on one line. Avoid any trailing commas or markdown format blocks. Use this exact key structure:
+{"category":"${selectedChapter}","vignette":"Clinical story here...","options":["Choice A","Choice B","Choice C","Choice D"],"correctIndex":0,"explanation":"Rationale here..."}`;
 
         try {
             const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${globalSecretApiKey}`, {
@@ -310,7 +311,7 @@ You must return a raw JSON object matching this exact example layout structure:
                     contents: [{ parts: [{ text: coreInstructions }] }],
                     generationConfig: { 
                         responseMimeType: "application/json",
-                        temperature: 1.0
+                        temperature: 0.85
                     }
                 })
             });
@@ -318,32 +319,44 @@ You must return a raw JSON object matching this exact example layout structure:
             const data = await res.json();
             if (data.error) throw new Error(data.error.message);
             
-            // 🛡️ CRITICAL PLUG: Safely check if the backend response structure is present
             if (!data.candidates || !data.candidates[0] || !data.candidates[0].content) {
-                console.warn("API quota restriction or empty return structure detected. Retrying...");
+                console.warn("Empty response structure payload received. Retrying call...");
                 return fetchNextAICase();
             }
             
             let rawText = data.candidates[0].content.parts[0].text.trim();
             
+            // Strip out any accidental markdown blocks
             if (rawText.includes("```")) {
                 rawText = rawText.replace(/```json/gi, "").replace(/```/g, "").trim();
             }
             
+            // Isolate JSON content fields
             const firstBrace = rawText.indexOf("{");
             const lastBrace = rawText.lastIndexOf("}");
             
             if (firstBrace === -1 || lastBrace === -1) {
-                console.warn("Structural framing lost. Auto-retriggering module request.");
+                console.warn("Brace elements missing. Retrying runtime content...");
                 return fetchNextAICase(); 
             }
             
             rawText = rawText.substring(firstBrace, lastBrace + 1);
-            currentCaseData = JSON.parse(rawText);
-            renderAICase();
+            
+            // 🧹 ADVANCED STRING SANITIZATION: Clean up broken commas or bad line breaks
+            rawText = rawText
+                .replace(/,\s*([\]}])/g, '$1') // Removes illegal trailing commas before closing braces/brackets
+                .replace(/[\u0000-\u001F\u007F-\u009F]/g, ""); // Removes hidden control characters that break JSON parsing
+
+            try {
+                currentCaseData = JSON.parse(rawText);
+                renderAICase();
+            } catch (parseError) {
+                console.warn("JSON Sanitizer failed to clean string format. Forcing auto-retry...", parseError);
+                return fetchNextAICase(); // Silently call the API again for a fresh question instead of displaying an error screen
+            }
             
         } catch (e) {
-            console.error("Layout Handshake Log:", e);
+            console.error("Layout Handshake Failure Log:", e);
             document.getElementById("question-vignette").textContent = "The testing engine encountered an unexpected data layout formatting anomaly. Click another study area or tap Next to refresh.";
             document.getElementById("loading-spinner").style.display = "none";
             document.getElementById("interactive-quiz-workspace").style.display = "block";
