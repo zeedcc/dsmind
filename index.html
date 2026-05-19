@@ -94,9 +94,9 @@
             <input type="email" id="auth-email" placeholder="Email Address" />
             <input type="password" id="auth-password" placeholder="Password" />
             <div class="auth-buttons">
-                <button class="btn btn-primary" id="auth-primary-btn" onclick="window.handleAuthSubmit()">Log In</button>
+                <button class="btn btn-primary" id="auth-primary-btn">Log In</button>
             </div>
-            <div class="auth-toggle-link" id="auth-toggle-str" onclick="window.toggleAuthMode()">Don't have an account? Sign Up</div>
+            <div class="auth-toggle-link" id="auth-toggle-str">Don't have an account? Sign Up</div>
         </div>
     </div>
 
@@ -118,14 +118,14 @@
             <div class="stat-badge">🔥 <span id="daily-streak-lbl">0</span> Day Streak</div>
             <div class="stat-badge" style="border-color: var(--matcha-medium);">⚡ Combo: <span id="combo-lbl">0</span></div>
             <div class="stat-badge" style="background-color: #fffdf0;">🎯 Acc: <span id="accuracy-lbl">0%</span></div>
-            <button class="btn" style="background: transparent; color: var(--strawberry-dark); padding: 5px;" onclick="window.logOutUser()">Logout</button>
+            <button class="btn" id="logout-btn" style="background: transparent; color: var(--strawberry-dark); padding: 5px;">Logout</button>
         </div>
     </div>
 
     <div class="config-tray">
         <div class="config-group">
             <span style="font-size: 13px; font-weight: 700; color: var(--matcha-dark);">Study Focus Area:</span>
-            <select id="focus-select" onchange="window.fetchNextAICase()">
+            <select id="focus-select">
                 <option value="any random DSM-5 disorder chapter">Comprehensive (All DSM-5)</option>
                 <option value="Neurodevelopmental Disorders">Neurodevelopmental</option>
                 <option value="Schizophrenia Spectrum and Other Psychotic Disorders">Schizophrenia Spectrum</option>
@@ -149,8 +149,8 @@
             <div class="vignette" id="question-vignette">Synchronizing secure cloud deployment credentials...</div>
             <div class="options-list" id="options-box"></div>
             <div class="actions-container">
-                <button class="btn btn-primary" id="submit-btn" onclick="window.evaluateAnswer()" disabled>Confirm Response</button>
-                <button class="btn btn-primary" id="next-btn" onclick="window.fetchNextAICase()" style="display: none;">Next Board Item</button>
+                <button class="btn btn-primary" id="submit-btn" disabled>Confirm Response</button>
+                <button class="btn btn-primary" id="next-btn" style="display: none;">Next Board Item</button>
             </div>
             <div class="explanation-panel" id="explanation-box">
                 <h3>🍵 High-Yield Diagnostic Breakdown</h3>
@@ -189,13 +189,13 @@
     let userDataStore = { totalXp: 0, currentCombo: 0, globalAttempts: 0, globalCorrect: 0, dailyStreak: 0, lastStudyDate: "" };
     const XP_PER_LEVEL = 300;
 
-    // Explicit window attachments so HTML onClick can interact cleanly with type="module" scripts
-    window.handleAuthSubmit = handleAuthSubmit;
-    window.toggleAuthMode = toggleAuthMode;
-    window.logOutUser = logOutUser;
-    window.fetchNextAICase = fetchNextAICase;
-    window.evaluateAnswer = evaluateAnswer;
-    window.selectOptIdx = selectOptIdx;
+    // Attach programmatic event listeners to guarantee operations trigger across all layout frameworks
+    document.getElementById("auth-primary-btn").addEventListener("click", handleAuthSubmit);
+    document.getElementById("auth-toggle-str").addEventListener("click", toggleAuthMode);
+    document.getElementById("logout-btn").addEventListener("click", logOutUser);
+    document.getElementById("focus-select").addEventListener("change", fetchNextAICase);
+    document.getElementById("submit-btn").addEventListener("click", evaluateAnswer);
+    document.getElementById("next-btn").addEventListener("click", fetchNextAICase);
 
     onAuthStateChanged(auth, async (user) => {
         if (user) {
@@ -321,4 +321,71 @@
     function renderAICase() {
         document.getElementById("loading-spinner").style.display = "none";
         document.getElementById("interactive-quiz-workspace").style.display = "block";
-        selected
+        selectedIdx = null;
+        document.getElementById("question-category").textContent = currentCaseData.category;
+        document.getElementById("question-vignette").textContent = currentCaseData.vignette;
+        const box = document.getElementById("options-box"); box.innerHTML = "";
+        currentCaseData.options.forEach((opt, idx) => {
+            const optEl = document.createElement("div"); optEl.className = "option-item";
+            optEl.innerHTML = `<span class="option-prefix">${String.fromCharCode(65 + idx)}</span> <span>${opt}</span>`;
+            
+            // Inline lexical binding configuration for choices inside dynamic loops
+            optEl.addEventListener("click", () => selectOptIdx(idx, optEl));
+            box.appendChild(optEl);
+        });
+    }
+
+    function selectOptIdx(idx, el) {
+        document.querySelectorAll(".option-item").forEach(i => i.classList.remove("selected"));
+        selectedIdx = idx; el.classList.add("selected");
+        document.getElementById("submit-btn").disabled = false;
+    }
+
+    function evaluateAnswer() {
+        if (selectedIdx === null) return;
+        
+        // Remove click event listeners from options after submission
+        const opts = document.querySelectorAll(".option-item");
+        const clonedOpts = [];
+        opts.forEach(o => {
+            const clone = o.cloneNode(true);
+            o.parentNode.replaceChild(clone, o);
+            clonedOpts.push(clone);
+        });
+        
+        userDataStore.globalAttempts++;
+
+        const banner = document.getElementById("rewards-banner");
+        let points = 10;
+        const oldLvl = Math.floor(userDataStore.totalXp / XP_PER_LEVEL) + 1;
+
+        if (selectedIdx === currentCaseData.correctIndex) {
+            clonedOpts[selectedIdx].classList.add("correct");
+            userDataStore.globalCorrect++; userDataStore.currentCombo++;
+            points += 40 + (userDataStore.currentCombo * 5);
+            banner.className = "rewards-ticker rewards-success";
+            banner.innerHTML = `🎯 Correct! +${points} XP. (Combo x${userDataStore.currentCombo})`;
+        } else {
+            clonedOpts[selectedIdx].classList.add("incorrect");
+            clonedOpts[currentCaseData.correctIndex].classList.add("correct");
+            userDataStore.currentCombo = 0;
+            banner.className = "rewards-ticker rewards-fail";
+            banner.innerHTML = `❌ Incorrect. +10 Participation XP. Combo broken!`;
+        }
+
+        userDataStore.totalXp += points;
+        pushProgressToCloud(); refreshUiLayout();
+
+        if ((Math.floor(userDataStore.totalXp / XP_PER_LEVEL) + 1) > oldLvl) {
+            setTimeout(() => { alert("🎉 LEVEL UP!"); }, 400);
+        }
+
+        banner.style.display = "block";
+        document.getElementById("explanation-content").textContent = currentCaseData.explanation;
+        document.getElementById("explanation-box").style.display = "block";
+        document.getElementById("submit-btn").style.display = "none";
+        document.getElementById("next-btn").style.display = "block";
+    }
+</script>
+</body>
+</html>
