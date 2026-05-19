@@ -19,77 +19,138 @@
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; }
-        body { background-color: var(--matcha-bg); color: var(--text-dark); display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 20px; }
+        body { background-color: var(--matcha-bg); color: var(--text-dark); display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 12px; }
 
         .app-container {
             width: 100%; max-width: 850px; background: var(--cream); border-radius: 24px;
             box-shadow: var(--shadow); border: 4px solid var(--strawberry-pink); overflow: hidden; display: flex; flex-direction: column; position: relative;
         }
 
-        header { background-color: var(--matcha-dark); color: var(--cream); padding: 24px; text-align: center; border-bottom: 4px solid var(--strawberry-pink); position: relative;}
-        header h1 { font-size: 28px; letter-spacing: 2px; margin-bottom: 4px; font-weight: 800; }
-        header p { font-size: 12px; color: var(--strawberry-pink); text-transform: uppercase; letter-spacing: 2px; font-weight: bold; }
+        header { background-color: var(--matcha-dark); color: var(--cream); padding: 20px 16px; text-align: center; border-bottom: 4px solid var(--strawberry-pink); position: relative;}
+        header h1 { font-size: 26px; letter-spacing: 2px; margin-bottom: 4px; font-weight: 800; }
+        header p { font-size: 11px; color: var(--strawberry-pink); text-transform: uppercase; letter-spacing: 1.5px; font-weight: bold; line-height: 1.3; }
 
         .auth-overlay {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: var(--cream);
-            z-index: 100; display: flex; flex-direction: column; justify-content: flex-start; align-items: center; padding: 40px; overflow-y: auto;
+            z-index: 100; display: flex; flex-direction: column; justify-content: flex-start; align-items: center; padding: 20px; overflow-y: auto;
         }
         .auth-card {
-            width: 100%; max-width: 460px; padding: 30px; border-radius: 20px; border: 3px solid var(--matcha-light); background: #fff; box-shadow: var(--shadow); margin-bottom: 20px;
+            width: 100%; max-width: 460px; padding: 24px; border-radius: 20px; border: 3px solid var(--matcha-light); background: #fff; box-shadow: var(--shadow); margin-bottom: 20px;
         }
-        .auth-card h2 { color: var(--matcha-dark); margin-bottom: 20px; text-align: center; }
-        .auth-card input { width: 100%; padding: 12px; margin-bottom: 14px; border: 2px solid var(--matcha-light); border-radius: 8px; outline: none; }
+        .auth-card h2 { color: var(--matcha-dark); margin-bottom: 20px; text-align: center; font-size: 22px; }
+        .auth-card input { width: 100%; padding: 12px; margin-bottom: 14px; border: 2px solid var(--matcha-light); border-radius: 8px; outline: none; font-size: 14px; }
         .auth-card input:focus { border-color: var(--strawberry-dark); }
         .auth-buttons { display: flex; gap: 10px; }
         .auth-buttons button { flex: 1; }
         .auth-toggle-link { margin-top: 15px; text-align: center; font-size: 13px; color: var(--matcha-medium); cursor: pointer; text-decoration: underline; }
         
-        /* 📚 INTEGRATED STEP-BY-STEP KEY CREATION GUIDE VISUALS */
         .guide-card {
-            width: 100%; max-width: 460px; padding: 24px; border-radius: 20px; border: 2px dashed var(--matcha-medium); background: #FAF6F0; color: var(--text-dark);
+            width: 100%; max-width: 460px; padding: 20px; border-radius: 20px; border: 2px dashed var(--matcha-medium); background: #FAF6F0; color: var(--text-dark);
         }
-        .guide-card h3 { color: var(--matcha-dark); margin-bottom: 12px; display: flex; align-items: center; gap: 8px; font-size: 16px; }
+        .guide-card h3 { color: var(--matcha-dark); margin-bottom: 12px; display: flex; align-items: center; gap: 8px; font-size: 15px; }
         .guide-steps { list-style: none; display: flex; flex-direction: column; gap: 12px; }
         .guide-steps li { font-size: 13px; line-height: 1.4; display: flex; gap: 10px; align-items: flex-start; }
         .step-num { background: var(--matcha-dark); color: var(--cream); width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; border-radius: 50%; font-weight: bold; font-size: 11px; flex-shrink: 0; margin-top: 2px; }
         .guide-steps a { color: var(--strawberry-dark); font-weight: bold; text-decoration: underline; }
         .highlight-text { background: #ffebeb; padding: 2px 6px; border-radius: 4px; font-weight: 600; color: var(--strawberry-dark); }
 
-        .rpg-dashboard { background-color: var(--strawberry-light); padding: 15px 24px; border-bottom: 2px solid rgba(95, 125, 86, 0.1); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; }
-        .stat-badge { background: #fff; padding: 8px 14px; border-radius: 12px; box-shadow: 0 2px 6px rgba(0,0,0,0.05); display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 700; color: var(--matcha-dark); border: 1px solid var(--strawberry-pink); }
-        .level-container { display: flex; flex-direction: column; width: 200px; }
-        .xp-track { width: 100%; background-color: rgba(95, 125, 86, 0.2); height: 8px; border-radius: 4px; margin-top: 4px; overflow: hidden; }
-        .xp-bar { height: 100%; width: 0%; background-color: var(--matcha-medium); transition: width 0.4s ease; }
+        /* 📱 RESPONSIVE RPG DASHBOARD GRID */
+        .rpg-dashboard { 
+            background-color: var(--strawberry-light); 
+            padding: 16px; 
+            border-bottom: 2px solid rgba(95, 125, 86, 0.1); 
+            display: flex; 
+            flex-direction: column;
+            gap: 14px;
+        }
+        .level-container { width: 100%; }
         
-        .config-tray { background-color: #FAF4EB; padding: 12px 24px; border-bottom: 1px solid rgba(95, 125, 86, 0.1); display: flex; align-items: center; justify-content: space-between; }
-        .config-group { display: flex; align-items: center; gap: 12px; }
-        .config-tray select { padding: 8px 12px; border: 2px solid var(--matcha-light); border-radius: 8px; font-size: 13px; background-color: #fff; outline: none; font-weight: 600; color: var(--matcha-dark); }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            width: 100%;
+        }
+        .stat-badge { 
+            background: #fff; 
+            padding: 10px 12px; 
+            border-radius: 12px; 
+            box-shadow: 0 2px 6px rgba(0,0,0,0.05); 
+            display: flex; 
+            align-items: center; 
+            justify-content: center;
+            gap: 6px; 
+            font-size: 12px; 
+            font-weight: 700; 
+            color: var(--matcha-dark); 
+            border: 1px solid var(--strawberry-pink); 
+            text-align: center;
+        }
 
-        .main-content { padding: 30px; flex-grow: 1; position: relative; }
-        .category-badge { display: inline-block; background-color: var(--matcha-light); color: var(--matcha-dark); padding: 6px 14px; border-radius: 20px; font-size: 11px; font-weight: 700; text-transform: uppercase; margin-bottom: 16px; }
-        .vignette { font-size: 16px; line-height: 1.6; margin-bottom: 24px; background-color: #fff; padding: 20px; border-left: 5px solid var(--strawberry-dark); border-radius: 4px; }
-        .options-list { display: flex; flex-direction: column; gap: 12px; margin-bottom: 24px; }
-        .option-item { background-color: #fff; border: 2px solid var(--matcha-light); border-radius: 12px; padding: 16px; font-size: 15px; cursor: pointer; display: flex; align-items: center; transition: all 0.2s ease; }
+        .dashboard-actions {
+            grid-column: span 2;
+            display: flex;
+            gap: 10px;
+            width: 100%;
+            margin-top: 4px;
+        }
+        .dashboard-actions .btn { flex: 1; justify-content: center; display: inline-flex; align-items: center; }
+        
+        .config-tray { background-color: #FAF4EB; padding: 14px 16px; border-bottom: 1px solid rgba(95, 125, 86, 0.1); }
+        .config-group { display: flex; flex-direction: column; gap: 8px; width: 100%; }
+        .config-group span { font-size: 13px; font-weight: 700; color: var(--matcha-dark); }
+        .config-tray select { width: 100%; padding: 10px 12px; border: 2px solid var(--matcha-light); border-radius: 8px; font-size: 13px; background-color: #fff; outline: none; font-weight: 600; color: var(--matcha-dark); }
+
+        .main-content { padding: 20px 16px; flex-grow: 1; position: relative; }
+        .category-badge { display: inline-block; background-color: var(--matcha-light); color: var(--matcha-dark); padding: 6px 14px; border-radius: 20px; font-size: 11px; font-weight: 700; text-transform: uppercase; margin-bottom: 14px; }
+        .vignette { font-size: 15px; line-height: 1.5; margin-bottom: 20px; background-color: #fff; padding: 16px; border-left: 5px solid var(--strawberry-dark); border-radius: 4px; box-shadow: 0 2px 8px rgba(0,0,0,0.02); }
+        .options-list { display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; }
+        .option-item { background-color: #fff; border: 2px solid var(--matcha-light); border-radius: 12px; padding: 14px; font-size: 14px; cursor: pointer; display: flex; align-items: center; transition: all 0.2s ease; line-height: 1.4; }
         .option-item:hover { border-color: var(--strawberry-dark); background-color: var(--strawberry-light); }
         .option-item.selected { border-color: var(--matcha-dark); background-color: var(--matcha-light); color: var(--matcha-dark); font-weight: 600; }
         .option-item.correct { border-color: #2e7d32; background-color: #e8f5e9; color: #1b5e20; font-weight: 600; }
         .option-item.incorrect { border-color: var(--strawberry-dark); background-color: var(--strawberry-light); color: var(--strawberry-dark); text-decoration: line-through; }
-        .option-prefix { font-weight: bold; margin-right: 12px; background-color: var(--matcha-bg); width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; border-radius: 50%; font-size: 13px; }
+        .option-prefix { font-weight: bold; margin-right: 12px; background-color: var(--matcha-bg); width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; border-radius: 50%; font-size: 13px; flex-shrink: 0; }
         
-        .actions-container { display: flex; justify-content: space-between; align-items: center; }
-        .btn { padding: 10px 20px; border: none; border-radius: 12px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s ease; }
+        .actions-container { display: flex; justify-content: transparent; align-items: center; width: 100%; }
+        .actions-container .btn { width: 100%; padding: 12px; font-size: 15px; border-radius: 12px; border: none; font-weight: 600; cursor: pointer; transition: all 0.2s ease; text-align: center; }
         .btn-primary { background-color: var(--matcha-dark); color: var(--cream); }
         .btn-primary:hover { background-color: var(--matcha-medium); }
         .btn-primary:disabled { background-color: #ccc; cursor: not-allowed; }
 
-        .rewards-ticker { margin-bottom: 15px; padding: 12px; border-radius: 8px; text-align: center; font-weight: bold; display: none; }
+        .rewards-ticker { margin-bottom: 15px; padding: 12px; border-radius: 8px; text-align: center; font-weight: bold; font-size: 13px; display: none; }
         .rewards-success { background-color: #e8f5e9; color: #1b5e20; border: 1px solid #a5d6a7; }
         .rewards-fail { background-color: var(--strawberry-light); color: var(--strawberry-dark); border: 1px solid var(--strawberry-pink); }
 
-        .explanation-panel { margin-top: 24px; background-color: #FAF4EB; border: 2px dashed var(--matcha-medium); border-radius: 12px; padding: 20px; display: none; }
-        .loading-overlay { display: none; text-align: center; padding: 40px 0; }
-        .spinner { width: 40px; height: 40px; border: 4px solid var(--strawberry-pink); border-top: 4px solid var(--matcha-dark); border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 16px auto; }
+        .explanation-panel { margin-top: 20px; background-color: #FAF4EB; border: 2px dashed var(--matcha-medium); border-radius: 12px; padding: 16px; }
+        .explanation-panel h3 { font-size: 15px; margin-bottom: 8px; }
+        .explanation-text { font-size: 13.5px; line-height: 1.5; color: var(--text-dark); }
+        
+        .loading-overlay { display: none; text-align: center; padding: 30px 0; }
+        .spinner { width: 36px; height: 36px; border: 4px solid var(--strawberry-pink); border-top: 4px solid var(--matcha-dark); border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 12px auto; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        /* 🖥️ DESKTOP MEDIA QUERIES DESIGN REFINEMENT */
+        @media (min-width: 650px) {
+            body { padding: 20px; }
+            header { padding: 24px; }
+            header h1 { font-size: 28px; }
+            header p { font-size: 12px; letter-spacing: 2px; }
+            .rpg-dashboard { flex-direction: row; justify-content: space-between; align-items: center; padding: 15px 24px; }
+            .level-container { width: 200px; }
+            .stats-grid { display: flex; gap: 10px; align-items: center; width: auto; }
+            .stat-badge { padding: 8px 14px; font-size: 13px; width: auto; }
+            .dashboard-actions { display: flex; width: auto; margin-top: 0; gap: 10px; }
+            .dashboard-actions .btn { width: auto; }
+            .config-tray { padding: 12px 24px; }
+            .config-group { flex-direction: row; align-items: center; gap: 12px; }
+            .config-tray select { width: auto; }
+            .main-content { padding: 30px; }
+            .vignette { font-size: 16px; padding: 20px; }
+            .option-item { font-size: 15px; padding: 16px; }
+            .actions-container .btn { width: auto; padding: 10px 20px; font-size: 14px; }
+            .explanation-panel { padding: 20px; }
+        }
     </style>
 </head>
 <body>
@@ -146,17 +207,21 @@
             <div class="xp-track"><div class="xp-bar" id="xp-indicator"></div></div>
         </div>
         
-        <div style="display: flex; gap: 10px; align-items: center;">
-            <div class="stat-badge">🔥 <span id="daily-streak-lbl">0</span> Day Streak</div>
+        <div class="stats-grid">
+            <div class="stat-badge">🔥 <span id="daily-streak-lbl">0</span> Streak</div>
             <div class="stat-badge" style="border-color: var(--matcha-medium);">⚡ Combo: <span id="combo-lbl">0</span></div>
-            <div class="stat-badge" style="background-color: #fffdf0;">🎯 Acc: <span id="accuracy-lbl">0%</span></div>
-            <button class="btn" style="background: transparent; color: var(--strawberry-dark); padding: 5px;" onclick="logOutUser()">Logout</button>
+            <div class="stat-badge" style="background-color: #fffdf0; grid-column: span 2;">🎯 Accuracy: <span id="accuracy-lbl">0%</span></div>
+            
+            <div class="dashboard-actions">
+                <button class="btn" style="background-color: #f7e1e3; color: var(--strawberry-dark); border: 1px solid var(--strawberry-pink); font-size: 12px; padding: 8px 12px; font-weight: 700; border-radius: 10px;" onclick="clearLocalAppCache()">⚙️ Fix Engine</button>
+                <button class="btn" style="background: transparent; color: var(--text-dark); opacity: 0.6; padding: 5px; font-size: 12px;" onclick="logOutUser()">Logout</button>
+            </div>
         </div>
     </div>
 
     <div class="config-tray">
         <div class="config-group">
-            <span style="font-size: 13px; font-weight: 700; color: var(--matcha-dark);">Study Focus Area:</span>
+            <span>Study Focus Area:</span>
             <select id="focus-select" onchange="fetchNextAICase()">
                 <option value="any random DSM-5 disorder chapter">Comprehensive (All DSM-5)</option>
                 <option value="Neurodevelopmental Disorders">Neurodevelopmental</option>
@@ -174,7 +239,7 @@
 
     <div class="main-content">
         <div class="rewards-ticker" id="rewards-banner"></div>
-        <div class="loading-overlay" id="loading-spinner"><div class="spinner"></div><p style="color: var(--matcha-dark); font-weight: 600;">Sifting database modules...</p></div>
+        <div class="loading-overlay" id="loading-spinner"><div class="spinner"></div><p style="color: var(--matcha-dark); font-weight: 600; font-size: 14px;">Sifting database modules...</p></div>
 
         <div id="interactive-quiz-workspace">
             <span class="category-badge" id="question-category">DSM-5 Area</span>
@@ -184,7 +249,7 @@
                 <button class="btn btn-primary" id="submit-btn" onclick="evaluateAnswer()" disabled>Confirm Response</button>
                 <button class="btn btn-primary" id="next-btn" onclick="fetchNextAICase()" style="display: none;">Next Board Item</button>
             </div>
-            <div class="explanation-panel" id="explanation-box">
+            <div class="explanation-panel" id="explanation-box" style="display: none;">
                 <h3>🍵 High-Yield Diagnostic Breakdown</h3>
                 <div class="explanation-text" id="explanation-content"></div>
             </div>
@@ -227,6 +292,7 @@
     window.fetchNextAICase = fetchNextAICase;
     window.evaluateAnswer = evaluateAnswer;
     window.selectOptIdx = selectOptIdx;
+    window.clearLocalAppCache = clearLocalAppCache;
 
     onAuthStateChanged(auth, async (user) => {
         if (user) {
@@ -324,6 +390,14 @@
         document.getElementById("combo-lbl").textContent = userDataStore.currentCombo;
         const accuracy = userDataStore.globalAttempts > 0 ? Math.round((userDataStore.globalCorrect / userDataStore.globalAttempts) * 100) : 0;
         document.getElementById("accuracy-lbl").textContent = `${accuracy}%`;
+    }
+
+    function clearLocalAppCache() {
+        if (confirm("This will clear cached data errors and request a clean layout connection. Your cloud account Level and Streaks are perfectly safe! Force engine reset?")) {
+            currentCaseData = null;
+            selectedIdx = null;
+            fetchNextAICase();
+        }
     }
 
     async function fetchNextAICase() {
