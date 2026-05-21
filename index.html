@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DSMind // Cloud Board Suite</title>
+    <title>DSMind</title>
     <script src="https://js.puter.com/v2/"></script>
     <style>
         :root {
@@ -99,10 +99,10 @@
         }
         .dashboard-actions .btn { flex: 1; justify-content: center; display: inline-flex; align-items: center; }
         
-        .config-tray { background-color: #FAF4EB; padding: 14px 16px; border-bottom: 1px solid rgba(95, 125, 86, 0.1); display: flex; flex-direction: column; gap: 12px; }
-        .config-group { display: flex; flex-direction: column; gap: 6px; width: 100%; }
+        .config-tray { background-color: #FAF4EB; padding: 14px 16px; border-bottom: 1px solid rgba(95, 125, 86, 0.1); display: flex; flex-direction: column; gap: 12px; flex-wrap: wrap; }
+        .config-group { display: flex; flex-direction: column; gap: 6px; width: 100%; flex: 1 1 240px; min-width: 220px; }
         .config-group span { font-size: 13px; font-weight: 700; color: var(--matcha-dark); }
-        .config-tray select { width: 100%; padding: 10px 12px; border: 2px solid var(--matcha-light); border-radius: 8px; font-size: 13px; background-color: #fff; outline: none; font-weight: 600; color: var(--matcha-dark); }
+        .config-tray select { width: 100%; min-width: 0; padding: 10px 12px; border: 2px solid var(--matcha-light); border-radius: 8px; font-size: 13px; background-color: #fff; outline: none; font-weight: 600; color: var(--matcha-dark); }
 
         .main-content { padding: 20px 16px; flex-grow: 1; position: relative; }
         .category-badge { display: inline-block; background-color: var(--matcha-light); color: var(--matcha-dark); padding: 6px 14px; border-radius: 20px; font-size: 11px; font-weight: 700; text-transform: uppercase; margin-bottom: 14px; }
@@ -145,8 +145,8 @@
             .dashboard-actions { display: flex; width: auto; margin-top: 0; gap: 10px; }
             .dashboard-actions .btn { width: auto; }
             .config-tray { padding: 12px 24px; flex-direction: row; justify-content: space-between; gap: 20px; }
-            .config-group { flex-direction: row; align-items: center; gap: 12px; width: auto; }
-            .config-tray select { width: auto; }
+            .config-group { flex-direction: row; align-items: center; gap: 12px; width: auto; flex: 1 1 260px; min-width: 220px; }
+            .config-tray select { width: 100%; }
             .main-content { padding: 30px; }
             .vignette { font-size: 16px; padding: 20px; }
             .option-item { font-size: 15px; padding: 16px; }
@@ -244,6 +244,15 @@
                 <option value="Trauma- and Stressor-Related Disorders">Trauma & Stressor</option>
                 <option value="Feeding and Eating Disorders">Feeding & Eating</option>
                 <option value="Personality Disorders">Personality Disorders</option>
+            </select>
+        </div>
+        <div class="config-group">
+            <span>Difficulty Level:</span>
+            <select id="difficulty-select" onchange="fetchNextAICase()">
+                <option value="easy">Easy — diagnostic criteria only</option>
+                <option value="medium">Medium — criteria plus confusing specifiers</option>
+                <option value="hard">Hard — criteria with differential diagnosis / no diagnosis option</option>
+                <option value="random">Random — vary difficulty</option>
             </select>
         </div>
     </div>
@@ -422,6 +431,12 @@
 
         const selectedChapter = document.getElementById("focus-select").value;
         const selectedModel = document.getElementById("model-select").value;
+        let selectedDifficulty = document.getElementById("difficulty-select").value;
+        let usedDifficulty = selectedDifficulty;
+        if (selectedDifficulty === 'random') {
+            const difficultyPool = ['easy','medium','hard'];
+            usedDifficulty = difficultyPool[Math.floor(Math.random() * difficultyPool.length)];
+        }
         
         const ages = ["a 6-year-old child", "a 17-year-old adolescent", "a 24-year-old graduate student", "a 42-year-old worker", "a 71-year-old retiree"];
         const environments = ["an outpatient therapy group", "an emergency room intake", "a primary care office", "an inpatient psychiatric unit"];
@@ -431,11 +446,19 @@
         const rEnv = environments[Math.floor(Math.random() * environments.length)];
         const rQual = qualifiers[Math.floor(Math.random() * qualifiers.length)];
 
+        const difficultyNotes = {
+            easy: "Use straightforward DSM-5 diagnostic criteria only.",
+            medium: "Use diagnostic criteria with confusing specifiers or mixed features (for example, melancholic features, mixed features) in the case description and answer options.",
+            hard: "Create a realistic case that can be confused with a DSM-5 disorder but instead represents a normal reaction, differential diagnosis, or no diagnosis. The correct answer should often be 'No diagnosis', 'Normal grief response', or another nonpathological conclusion when criteria are not met.",
+        };
         const coreInstructions = `Create a distinct DSM-5 multiple-choice board question regarding: ${selectedChapter}. 
-Profile target: ${rAge} evaluated within ${rEnv} showing ${rQual}.
+    Profile target: ${rAge} evaluated within ${rEnv} showing ${rQual}.
 
-You must return ONLY a valid, parseable JSON object matching this exact schema structural layout, with zero surrounding text or conversational introduction markdown:
-{"category":"${selectedChapter}","vignette":"Case details...","options":["A","B","C","D"],"correctIndex":0,"explanation":"Breakdown..."}`;
+    Difficulty tier: ${usedDifficulty.toUpperCase()}.
+    ${difficultyNotes[usedDifficulty]}
+
+    You must return ONLY a valid, parseable JSON object matching this exact schema structural layout, with zero surrounding text or conversational introduction markdown:
+    {"category":"${selectedChapter}","vignette":"Case details...","options":["A","B","C","D"],"correctIndex":0,"explanation":"Breakdown..."}`;
 
         let rawText = "";
 
